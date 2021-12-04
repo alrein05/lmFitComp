@@ -4,19 +4,23 @@
 \alias{lmFitComp}
 \title{lmFitComp}
 \usage{
-lmFitComp(beta, pheno)
+lmFitComp(beta, pheno, colNum)
 }
 \arguments{
 \item{beta}{A matrix of beta-values between 0 and 1 with columns as samples and rows as probes}
 
 \item{pheno}{A phenotype data frame containing variables of interest on samples. Must be ordered the same as beta matrix.}
+
+\item{colNum}{An integer denoting the column number of the pheno data that contains the variable of interest}
 }
 \value{
 number of hypomethylated sites (down), insignificant sites, and hypermethylated sites (up)
 }
 \description{
-Takes a beta matrix with columns as samples, probes as rows
-and a phenotype dataframe with samples as rows and features as columns
+Takes a beta matrix of methylation data, a phenotype data frame with variables of interest, and
+a designation of which column number in the phenotype data contains the variable for which we
+are investigating differential methylation. It returns the number of CpG sites in the genome that
+ are hyper-methylated, hypo-methylated or not significant.
 }
 \examples{
 lmFitComp(beta_matrix, phenotype_dataframe)

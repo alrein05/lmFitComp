@@ -9,6 +9,7 @@
 #'@param colNum An integer denoting the column number of the pheno data that contains the variable of interest
 #'@return number of hypomethylated sites (down), insignificant sites, and hypermethylated sites (up)
 #'@examples lmFitComp(beta_matrix, phenotype_dataframe)
+#'@import stats
 #'@export
 lmFitComp <- function(beta, pheno, colNum) {
 #run linear regression model predicting methylation by a variable of interest
@@ -65,4 +66,3 @@ retlist <- list(return_df, compdata)
 return(retlist)
 
 }
-lmFitComp(beta,pheno)
