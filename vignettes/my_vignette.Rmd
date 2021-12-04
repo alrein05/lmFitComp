@@ -1,0 +1,149 @@
+---
+title: "my_vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{my_vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Load in library
+```{r setup}
+library(limma)
+library(lmFitComp)
+```
+
+Example 1 (Use the no association data)
+```{r}
+#run lmFit comp
+#show that lmfit also produces same output
+
+#Generate a beta matrix
+beta_vals <- runif(100)
+beta <- matrix(c(beta_vals), nrow=10, ncol=10)
+colnames(beta) <- c("Samp1","Samp2","Samp3","Samp4","Samp5","Samp6","Samp7","Samp8","Samp9","Samp10")
+
+#Generate phenotype data
+pheno <- data.frame(Sex=c(0,1,1,1,0,0,1,0,1,0),
+                       Age = c(54,35,60,49,30,21,25,45,67,38))
+rownames(pheno) <- c("Samp1","Samp2","Samp3","Samp4","Samp5","Samp6","Samp7","Samp8","Samp9","Samp10")
+
+#Create a design matrix for variable of interest
+des=model.matrix(~as.factor(pheno$Sex))
+
+#Run lmFit function to determine differentially methylated CpG sites from beta matrix
+modTest = lmFit(beta,design=des)
+
+#visualize the logFC(beta coefficient), t-statistic, p-value, and adjusted p-value for this method
+modTest
+
+#Run eBayes function for moderated t-statistics (smooths standard error to borrow strength across probes)
+modBaye = eBayes(modTest)
+
+#topTable provides effect estimates at CpG sites where FDR < 0.05
+TopHits_fdr<- topTable(modBaye, coef=2, number=nrow(beta),adjust.method = "fdr",p.value = 0.05)
+
+#decideTests prints direction and number of significant probes
+summary(decideTests(modBaye, adjust.method="fdr",p.value = 0.05))
+
+#Run lmFitComp and compare results to decideTests function above
+lmFitComp(beta,pheno,1)
+
+
+```
+
+Example 2 (Use simulated data with known association)
+```{r}
+#Load in beta matrix
+#Generate a beta matrix
+beta_vals_lo <- runif(50,min=0, max=0.5)
+beta_vals_hi <- runif(50,min=0.5, max=1)
+beta_1 <- matrix(c(beta_vals_lo,beta_vals_hi), nrow=10, ncol=10)
+colnames(beta_1) <- c("Samp1","Samp2","Samp3","Samp4","Samp5","Samp6","Samp7","Samp8","Samp9","Samp10")
+
+#Generate phenotype data
+pheno_2 <- data.frame(Sex=c(1,1,1,1,1,0,0,0,0,0))
+rownames(pheno_2) <- c("Samp1","Samp2","Samp3","Samp4","Samp5","Samp6","Samp7","Samp8","Samp9","Samp10")
+
+#run lmFit comp
+#show that lmfit also produces same output
+
+#Create a design matrix for variable of interest
+des_2=model.matrix(~as.factor(pheno_2$Sex))
+
+#Run lmFit function to determine differentially methylated CpG sites from beta matrix
+modTest2 = lmFit(beta_1,design=des_2)
+
+#Run eBayes function for moderated t-statistics (smooths standard error to borrow strength across probes)
+modBaye2 = eBayes(modTest2)
+
+#topTable provides effect estimates at CpG sites where FDR < 0.05
+TopHits_fdr2<- topTable(modBaye2, coef=2, number=nrow(beta_1),adjust.method = "fdr",p.value = 0.05)
+
+#decideTests prints direction and number of significant probes
+summary(decideTests(modBaye2, adjust.method="fdr",p.value = 0.05))
+
+#Run lmFitComp and compare results to decideTests function above
+lmFitComp(beta_1,pheno_2,1)
+obj <- lmFitComp(beta_1,pheno_2,1)
+obj
+
+```
+
+
+Compare beta-coefficients from our results to lmFit results
+```{r}
+all.equal(sort(TopHits_fdr2$logFC), sort(obj[[2]]$logFC))
+#Should be the same
+```
+Compare adjusted p-values from our results to lmFit results
+```{r}
+all.equal(sort(TopHits_fdr2$adj.P.Val), sort(obj[[2]]$adj.P.Val))
+#should be different because the process of lmFit involves using the eBayes function which creates moderated t-statistics which results in differing p-values and adjusted p values than when using normal linear regression.
+```
+
+Compare t-statistics from our results to lmFit results
+```{r}
+all.equal(sort(TopHits_fdr2$t), sort(obj[[2]]$t))
+#should be different because the process of lmFit involves using the eBayes function which creates moderated t-statistics which will differ from the t-statistics derived from normal linear regression.
+#Could not figure out how to implement the eBayes function into my function
+```
+Compare the relative efficiency
+```{r}
+realLmFit <- function(beta,pheno,colNum){
+des_2=model.matrix(~as.factor(pheno[,colNum]))
+
+#Run lmFit function to determine differentially methylated CpG sites from beta matrix
+modTest2 = lmFit(beta,design=des_2)
+
+#Run eBayes function for moderated t-statistics (smooths standard error to borrow strength across probes)
+modBaye2 = eBayes(modTest2)
+
+#topTable provides effect estimates at CpG sites where FDR < 0.05
+#TopHits_fdr2<- topTable(modBaye2, coef=2, number=nrow(beta),adjust.method = "fdr",p.value = 0.05)
+
+#decideTests prints direction and number of significant probes
+return(summary(decideTests(modBaye2, adjust.method="fdr",p.value = 0.05)))
+}
+
+#Would have used this benchmark function to compare efficiency but the results are not the same (as expected), so it does not allow proper comparison. 
+#This is not working so trying another way to measure efficiency
+# bench::mark(
+#   mylmFit=lmFitComp(beta_1,pheno_2,1),
+#   realLmFit=lmFit(beta=beta_1,pheno=pheno_2, colNum=1)
+# )
+
+
+#My function is just as efficient as realLmFit but it also skips an entire step of the process in realLmFit
+#Could not figure out how to implement the eBayes function yet :(
+system.time(lmFitComp(beta_1,pheno_2,1)) #0.02 seconds
+system.time(realLmFit(beta_1,pheno_2,1)) #0.02 seconds
+```
+
