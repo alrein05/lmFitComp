@@ -3,11 +3,12 @@
 #' Takes a beta matrix of methylation data, a phenotype data frame with variables of interest, and
 #' a designation of which column number in the phenotype data contains the variable for which we
 #' are investigating differential methylation. It returns the number of CpG sites in the genome that
-#'  are hyper-methylated, hypo-methylated or not significant.
+#'  are hyper-methylated, hypo-methylated or not significant. Also returns per-probe log fold change,
+#'  t-statistics, and p-values.
 #'@param beta A matrix of beta-values between 0 and 1 with columns as samples and rows as probes
 #'@param pheno A phenotype data frame containing variables of interest on samples. Must be ordered the same as beta matrix.
 #'@param colNum An integer denoting the column number of the pheno data that contains the variable of interest
-#'@return number of hypomethylated sites (down), insignificant sites, and hypermethylated sites (up)
+#'@return number of hypomethylated sites (down), insignificant sites, and hypermethylated sites (up) as well as the log fold change, t-statistic, p-values and adjusted p-values per probe
 #'@examples lmFitComp(beta_matrix, phenotype_dataframe)
 #'@import stats
 #'@export

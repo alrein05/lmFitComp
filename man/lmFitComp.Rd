@@ -14,13 +14,14 @@ lmFitComp(beta, pheno, colNum)
 \item{colNum}{An integer denoting the column number of the pheno data that contains the variable of interest}
 }
 \value{
-number of hypomethylated sites (down), insignificant sites, and hypermethylated sites (up)
+number of hypomethylated sites (down), insignificant sites, and hypermethylated sites (up) as well as the log fold change, t-statistic, p-values and adjusted p-values per probe
 }
 \description{
 Takes a beta matrix of methylation data, a phenotype data frame with variables of interest, and
 a designation of which column number in the phenotype data contains the variable for which we
 are investigating differential methylation. It returns the number of CpG sites in the genome that
- are hyper-methylated, hypo-methylated or not significant.
+ are hyper-methylated, hypo-methylated or not significant. Also returns per-probe log fold change,
+ t-statistics, and p-values.
 }
 \examples{
 lmFitComp(beta_matrix, phenotype_dataframe)
